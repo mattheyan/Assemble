@@ -9,8 +9,9 @@ param(
     [Parameter(Mandatory=$false, HelpMessage="Path to the directory where the completed module will be copied")]
     [string]$TargetPath,
 
+    [Alias('DependenciesToValidate')]
     [Parameter(Mandatory=$false, HelpMessage="The names of dependent modules to validate")]
-    [array]$DependenciesToValidate=@(),
+    [array]$RequiredModules=@(),
 
     [Parameter(Mandatory=$false, HelpMessage="Forcibly copy over the module file if it already exists")]
     [switch]$Force,
@@ -55,7 +56,7 @@ if ($Silent.IsPresent) {
 New-Item $moduleFile -Type File | Out-Null
 
 # Ensure that required modules are available and loaded
-$DependenciesToValidate | foreach {
+$RequiredModules | foreach {
     Write-Verbose "Adding dependency to" + $_
     Add-Content -Path $moduleFile -Value ("if (!(Get-Module " + $_ + ")) {")
     Add-Content -Path $moduleFile -Value ("`tImport-Module " + $_ + " -ErrorAction Stop")
