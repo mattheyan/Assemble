@@ -1,0 +1,2 @@
+Honor whitespace rules
+Add support for 'assemblerc' file (or something similar)
