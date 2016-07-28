@@ -28,6 +28,6 @@ function EnsureDirectory ([string]$path, [boolean]$defaultToCurrentLocation) {
             exit 1
         }
     }
-    
+
     return $path
 }

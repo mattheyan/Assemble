@@ -34,6 +34,7 @@ function EnsureDirectory ([string]$path, [boolean]$defaultToCurrentLocation) {
 
 
 function Invoke-ScriptBuild {
+	[CmdletBinding()]
 	param(
 	    [Parameter(Mandatory=$true, HelpMessage="Name of the module to build")]
 	    [string]$Name,
@@ -54,7 +55,10 @@ function Invoke-ScriptBuild {
 	    [string[]]$Exclude,
 	
 	    [Parameter(Mandatory=$false, HelpMessage="Flags used by preprocessor.")]
-	    [string[]]$Flags
+	    [string[]]$Flags,
+	
+		[Parameter(Mandatory=$false, HelpMessage="Don't write status messages.")]
+		[switch]$Silent
 	)
 	
 	
@@ -64,17 +68,28 @@ function Invoke-ScriptBuild {
 	
 	# Create a temporary directory to build in
 	$buildDir = GetTempDirectory
-	Write-Host "Starting script build for module '$($Name)'."
-	Write-Host "NOTE: Building in temporary directory '$($buildDir)'..."
+	
+	if ($Silent.IsPresent) {
+		Write-Verbose "Starting script build for module '$($Name)'."
+	} else {
+		Write-Host "Starting script build for module '$($Name)'."
+	}
+	
+	Write-Verbose "NOTE: Building in temporary directory '$($buildDir)'..."
 	
 	$moduleFile = "$buildDir\$($Name).psm1"
 	
-	Write-Host "Creating empty module file..."
+	if ($Silent.IsPresent) {
+		Write-Verbose "Creating empty module file..."
+	} else {
+		Write-Host "Creating empty module file..."
+	}
+	
 	New-Item $moduleFile -Type File | Out-Null
 	
 	# Ensure that required modules are available and loaded
 	$DependenciesToValidate | foreach {
-	    Write-Host "Adding dependency to" + $_
+	    Write-Verbose "Adding dependency to" + $_
 	    Add-Content -Path $moduleFile -Value ("if (!(Get-Module " + $_ + ")) {")
 	    Add-Content -Path $moduleFile -Value ("`tImport-Module " + $_ + " -ErrorAction Stop")
 	    Add-Content -Path $moduleFile -Value "}"
@@ -84,18 +99,23 @@ function Invoke-ScriptBuild {
 	$symbols = @()
 	$sources = @()
 	
-	Write-Host "Searching for source files to include..."
+	if ($Silent.IsPresent) {
+		Write-Verbose "Searching for source files to include..."
+	} else {
+		Write-Host "Searching for source files to include..."
+	}
+	
 	Get-ChildItem -Path $SourcePath -Exclude $Exclude -Filter "*.ps1" -Recurse | %{
 	    if ($_.Name -eq "__init__.ps1") {
-	        Write-Host "Found __init__ (initialize) file."
+	        Write-Verbose "Found __init__ (initialize) file."
 	        $sources += $_.FullName
 	    }
 	    elseif ($_.Name -eq "__final__.ps1") {
-	        Write-Host "Found __final__ (finalize) file."
+	        Write-Verbose "Found __final__ (finalize) file."
 	        $sources += $_.FullName
 	    }
 	    elseif ($_.Name -match "([A-Z][a-z]+`-[A-Z][A-Za-z]+)`.ps1") {
-	        Write-Host "Found source file $($_)."
+	        Write-Verbose "Found source file $($_)."
 	        $symbols += $_.Name -replace ".ps1", ""
 	        $sources += $_.FullName
 	    }
@@ -104,7 +124,7 @@ function Invoke-ScriptBuild {
 	    }
 	}
 	
-	Write-Host "Symbols: $symbols"
+	Write-Verbose "Symbols: $symbols"
 	
 	$initFileExpr = "^\s*\. \.\\__init__\.ps1$"
 	
@@ -114,21 +134,25 @@ function Invoke-ScriptBuild {
 	$initFile = (resolve-path $SourcePath).Path + "\__init__.ps1"
 	$finalFile = (resolve-path $SourcePath).Path + "\__final__.ps1"
 	
-	Write-Host "Including source files..."
+	if ($Silent.IsPresent) {
+		Write-Verbose "Including source files..."
+	} else {
+		Write-Host "Including source files..."
+	}
 	
 	if ($sources -contains $initFile) {
-	    Write-Host "Including file __init__.ps1"
+	    Write-Verbose "Including file __init__.ps1"
 	    $ignore = $false
 	    (Get-Content $initFile | % {
 	        if ($_ -match $ifExpr) {
 	            if ($_ -match $ifdefExpr) {
 	                $flag = $_ -replace $ifdefExpr, '$1'
-	                Write-Host "Checking for flag $($flag)..."
+	                Write-Verbose "Checking for flag $($flag)..."
 	                if ($Flags -contains $flag) {
-	                    Write-Host "Found flag $flag."
+	                    Write-Verbose "Found flag $flag."
 	                }
 	                else {
-	                    Write-Host "Did not find flag $flag. Ignoring content..."
+	                    Write-Verbose "Did not find flag $flag. Ignoring content..."
 	                    $ignore = $true
 	                }
 	            }
@@ -140,7 +164,7 @@ function Invoke-ScriptBuild {
 	            $ignore = $false
 	        }
 	        elseif ($ignore) {
-	            Write-Host "Ignored: $_"
+	            Write-Verbose "Ignored: $_"
 	        }
 	        else {
 	            Write-Output $_
@@ -152,7 +176,7 @@ function Invoke-ScriptBuild {
 	$sources | sort Name | foreach {
 	    if ($_ -ne $initFile -and $_ -ne $finalFile) {
 	        $n = ((Split-Path -Path $_ -Leaf) -replace ".ps1", "")
-	        Write-Host "Including file $($n).ps1"
+	        Write-Verbose "Including file $($n).ps1"
 	        if ($n -ne "__init__") {
 	            Add-Content -Path $moduleFile -Value ("function " + $n + " {")
 	        }
@@ -161,12 +185,12 @@ function Invoke-ScriptBuild {
 	            if ($_ -match $ifExpr) {
 	                if ($_ -match $ifdefExpr) {
 	                    $flag = $_ -replace $ifdefExpr, '$1'
-	                    Write-Host "Checking for flag $($flag)..."
+	                    Write-Verbose "Checking for flag $($flag)..."
 	                    if ($Flags -contains $flag) {
-	                        Write-Host "Found flag $flag."
+	                        Write-Verbose "Found flag $flag."
 	                    }
 	                    else {
-	                        Write-Host "Did not find flag $flag. Ignoring content..."
+	                        Write-Verbose "Did not find flag $flag. Ignoring content..."
 	                        $ignore = $true
 	                    }
 	                }
@@ -178,7 +202,7 @@ function Invoke-ScriptBuild {
 	                $ignore = $false
 	            }
 	            elseif ($ignore) {
-	                Write-Host "Ignored: $_"
+	                Write-Verbose "Ignored: $_"
 	            }
 	            else {
 	                $newLine = "`t" + $_
@@ -186,19 +210,19 @@ function Invoke-ScriptBuild {
 	                if ($newLine -match $initFileExpr) {
 	                    $newLine = ""
 	                    $foundFileRefs = $true
-	                    Write-Host "Removed dot-source of '__init__.ps1'."
+	                    Write-Verbose "Removed dot-source of '__init__.ps1'."
 	                }
 	                else {
 	                    $symbols | foreach {
 	                        $symbolExpr = "\.\\" + $_ + "\.ps1"
 	                        if ($newLine -match $symbolExpr) {
 	                            $foundFileRefs = $true
-	                            Write-Host "Found file reference to symbol '$($_)'."
+	                            Write-Verbose "Found file reference to symbol '$($_)'."
 	                        }
 	                        $newLine = $newLine -replace $symbolExpr, $_
 	                    }
 	                    if ($foundFileRefs -eq $true) {
-	                        Write-Host "Result: $newLine"
+	                        Write-Verbose "Result: $newLine"
 	                    }
 	                }
 	                if ($newLine) {
@@ -212,24 +236,29 @@ function Invoke-ScriptBuild {
 	    }
 	}
 	
-	Write-Host "Registering export for symbols..."
+	if ($Silent.IsPresent) {
+		Write-Verbose "Registering export for symbols..."
+	} else {
+		Write-Host "Registering export for symbols..."
+	}
+	
 	$symbols | foreach {
 	    Add-Content -Path $moduleFile -Value ("Export-ModuleMember -Function " + $_)
 	}
 	
 	if ($sources -contains $finalFile) {
-	    Write-Host "Including file __final__.ps1"
+	    Write-Verbose "Including file __final__.ps1"
 	    $ignore = $false
 	    (Get-Content $finalFile | % {
 	        if ($_ -match $ifExpr) {
 	            if ($_ -match $ifdefExpr) {
 	                $flag = $_ -replace $ifdefExpr, '$1'
-	                Write-Host "Checking for flag $($flag)..."
+	                Write-Verbose "Checking for flag $($flag)..."
 	                if ($Flags -contains $flag) {
-	                    Write-Host "Found flag $flag."
+	                    Write-Verbose "Found flag $flag."
 	                }
 	                else {
-	                    Write-Host "Did not find flag $flag. Ignoring content..."
+	                    Write-Verbose "Did not find flag $flag. Ignoring content..."
 	                    $ignore = $true
 	                }
 	            }
@@ -241,7 +270,7 @@ function Invoke-ScriptBuild {
 	            $ignore = $false
 	        }
 	        elseif ($ignore) {
-	            Write-Host "Ignored: $_"
+	            Write-Verbose "Ignored: $_"
 	        }
 	        else {
 	            Write-Output $_
@@ -254,10 +283,14 @@ function Invoke-ScriptBuild {
 	if ((test-path -Path .\$($Name).psm1) -and !$Force.IsPresent) {
 	    throw "File '$($Name).psm1' already exists!"
 	}
-	Write-Host "Moving completed module..."
-	Copy-Item $moduleFile $TargetPath -Force | Out-Null
 	
-	$PSBuildSuccess = $true
+	if ($Silent.IsPresent) {
+		Write-Verbose "Moving completed module to '$($TargetPath)'..."
+	} else {
+		Write-Host "Moving completed module to '$($TargetPath)'..."
+	}
+	
+	Copy-Item $moduleFile $TargetPath -Force | Out-Null
 }
 
 Export-ModuleMember -Function Invoke-ScriptBuild
