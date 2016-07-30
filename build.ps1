@@ -5,7 +5,7 @@ if (Get-Module Assemble -ErrorAction SilentlyContinue) {
 }
 try {
     Import-Module .\Modules\Assemble\Assemble.psd1 -Scope Local -Force
-    Invoke-ScriptBuild -Name Assemble -SourcePath .\Scripts -TargetPath . -Force
+    Invoke-ScriptBuild -Name Assemble -SourcePath .\Scripts -TargetPath .\Output -Force
 } finally {
     Remove-Module Assemble
 	if ($reloadAssemble) {
