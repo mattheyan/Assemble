@@ -1,10 +1,10 @@
 @{
 
 # Script module or binary module file associated with this manifest.
-RootModule = 'Assemble.psm1'
+ModuleToProcess = 'Assemble.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.3.1'
+ModuleVersion = '0.4.0'
 
 # ID used to uniquely identify this module
 GUID = '9af3c41f-7297-4608-b531-ab6819e3c2a0'
@@ -16,10 +16,10 @@ Author = 'Bryan Matthews'
 CompanyName = 'VC3, Inc.'
 
 # Copyright statement for this module
-Copyright = '(c) 2015 VC3, Inc. All rights reserved.'
+Copyright = '(c) 2016 VC3, Inc. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'A PowerShell Module for building modules and packages from source (.ps1) scripts.'
+Description = 'A PowerShell Module for building a modules or single-file script from source (.ps1) scripts.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 # PowerShellVersion = ''

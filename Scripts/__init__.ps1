@@ -18,13 +18,13 @@ function EnsureDirectory ([string]$path, [boolean]$defaultToCurrentLocation) {
         $path = Get-Location
     }
     elseif (!(Test-Path $path)) {
-        Write-Error "ERROR: Path $path does not exist."
+        Write-Error "Path '$($path)' does not exist."
         exit 1
     }
     else {
         $path = (Resolve-Path $path).Path
         if (!(Get-Item $path).PSIsContainer) {
-            Write-Error "ERROR: Path $path is not a directory."
+            Write-Error "Path '$($path)' must be a directory."
             exit 1
         }
     }
