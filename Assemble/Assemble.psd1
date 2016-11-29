@@ -19,7 +19,7 @@ CompanyName = 'VC3, Inc.'
 Copyright = '(c) 2016 VC3, Inc. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'A PowerShell Module for building a modules or single-file script from source (.ps1) scripts.'
+Description = 'A PowerShell Module for building a module or single-file script from source (.ps1) scripts.'
 
 # Minimum version of the Windows PowerShell engine required by this module
 # PowerShellVersion = ''
