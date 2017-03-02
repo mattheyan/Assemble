@@ -255,7 +255,8 @@ if ($initFile) {
     Add-Content -Path $tempPath -Value "`r`n"
 }
 
-$sources | sort Name | foreach {
+$sources | sort | foreach {
+    Write-Verbose "Name: $($_.Name)"
     if ($_ -ne $initFile -and $_ -ne $finalFile -and $_ -ne $mainFile) {
         $n = ((Split-Path -Path $_ -Leaf) -replace ".ps1", "")
         Write-Verbose "Including file $($n).ps1"
@@ -332,7 +333,7 @@ if ($OutputType -eq 'Module') {
     	Write-Host "Registering export for symbols..."
     }
 
-    $symbols | foreach {
+    $symbols | sort | foreach {
         if (-not($SymbolsToExport) -or ($SymbolsToExport -contains $_)) {
             Add-Content -Path $tempPath -Value "Export-ModuleMember -Function '$($_)'"
         }
