@@ -4,7 +4,7 @@
 ModuleToProcess = 'Assemble.psm1'
 
 # Version number of this module.
-ModuleVersion = '0.4.1'
+ModuleVersion = '0.5.0'
 
 # ID used to uniquely identify this module
 GUID = '9af3c41f-7297-4608-b531-ab6819e3c2a0'

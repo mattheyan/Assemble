@@ -9,10 +9,32 @@ Exported Commands
 ### Invoke-ScriptBuild
 
 ```
+
+**Module Output:**
+
 Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
-    [[-OutputType] <string> {Auto | Module | Script}] [[-RequiredModules] <array>]
-    [[-Exclude] <string[]>] [[-SymbolsToExport] <string[]>] [[-Flags] <string[]>]
+    [-RequiredModules <array>] [-Exclude <string[]>] [-SymbolsToExport <string[]>]
+    [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
+
+**Module Output (no export declarations):**
+
+Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
+    [-RequiredModules <array>] [-Exclude <string[]>] [-SuppressSymbolExport]
+    [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
+
+**Script Output:**
+
+Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
+    -AsScript [-RequiredModules <array>] [-Exclude <string[]>]
+    [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
+
+**Legacy Parameters:**
+
+Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
+    -OutputType <string> {Auto | Module | Script} [-RequiredModules <array>]
+    [-Exclude <string[]>] [-SymbolsToExport <string[]>] [-Flags <string[]>]
     [-Force] [-Silent] [<CommonParameters>]
+
 ```
 
 **Name** ( \*\*\* *required* \*\*\* )
@@ -30,11 +52,15 @@ directory is used.
 Path to the directory or file where the completed module or script will be
 copied. If not specified, the current directory is used.
 
-**OutputType**
+**OutputType (Deprecated)**
 
 Type type of file (module or script) to produce). If not specified, the type will
 be inferred from the target path if a file path is given. The output type is
 required if the target path is a directory or is omitted.
+
+**AsScript**
+
+If specified, a single script file will be produced rather than a module file.
 
 **RequiredModules**
 
@@ -45,6 +71,12 @@ module by name from a global location (i.e. PSModulePath).
 **Exclude**
 
 A list of files (or wildcard patterns) in the source directory to exclude.
+
+**SuppressSymbolExport**
+
+Don't declare any exported module members. This has the effect of exporting
+everything (if the module manifest declares export '*'), OR, allows you to specify
+your exports in a "\_\_final\_\_.ps1" file.
 
 **SymbolsToExport**
 

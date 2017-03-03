@@ -1,42 +1,61 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName='ModuleOutputWithSymbols')]
 param(
-    [Parameter(Mandatory=$true, HelpMessage="Name of the module or script to build")]
+    # Name of the module or script to build
+    [Parameter(Mandatory=$true, Position=0, HelpMessage="Module Name")]
     [string]$Name,
 
-    [Parameter(Mandatory=$false, HelpMessage="Path to the directory that contains the source files to include")]
+    # Path to the directory that contains the source files to include
+    [Parameter(Position=1)]
     [string[]]$SourcePath,
 
-    [Parameter(Mandatory=$false, HelpMessage="Path to the directory or file where the output will be copied")]
+    # Path to the directory or file where the output will be copied
+    [Parameter(Position=2)]
     [string]$TargetPath,
 
+    # The type of output file to produce
     [Alias('Type')]
     [ValidateSet('Auto', 'Module', 'Script')]
-    [Parameter(Mandatory=$false, HelpMessage="The type of output file to produce")]
+    [Parameter(Mandatory=$true, ParameterSetName='LegacySpecifiedOutput')]
     [string]$OutputType,
 
+    # Produce a script file as output rather than a module
+    [Parameter(Mandatory=$true, ParameterSetName='ScriptOutput')]
+    [switch]$AsScript,
+
+    # The names of dependent modules to validate
     [Alias('DependenciesToValidate')]
-    [Parameter(Mandatory=$false, HelpMessage="The names of dependent modules to validate")]
+    [Parameter()]
     [array]$RequiredModules=@(),
 
-    [Parameter(Mandatory=$false, HelpMessage="Forcibly copy over the module or script file if it already exists")]
-    [switch]$Force,
-
-    [Parameter(Mandatory=$false, HelpMessage="PowerShell scripts (.ps1) to exclude from source files")]
+    # PowerShell scripts (.ps1) to exclude from source files
+    [Parameter()]
     [string[]]$Exclude,
 
+    [Alias('NoSymbols')]
+    [Parameter(ParameterSetName='ModuleOutputNoSymbols')]
+    [switch]$SuppressSymbolExport,
+
+    # Symbols to export when compiling a module
     [Alias('Export')]
-    [Parameter(Mandatory=$false, HelpMessage="Symbols to export when compiling a module.")]
+    [Parameter(ParameterSetName='ModuleOutputWithSymbols')]
+    [Parameter(ParameterSetName='LegacySpecifiedOutput')]
     [string[]]$SymbolsToExport,
 
-    [Parameter(Mandatory=$false, HelpMessage="Flags used by preprocessor.")]
+    # Flags used by preprocessor
+    [Parameter()]
     [string[]]$Flags,
 
-	[Parameter(Mandatory=$false, HelpMessage="Don't write status messages.")]
+    # Forcibly copy over the module or script file if it already exists
+    [Parameter()]
+    [switch]$Force,
+
+    # Don't write status messages
+	[Parameter()]
 	[switch]$Silent
 )
 
 #ifdef SOURCE
-. .\__init__.ps1
+. "$($PSScriptRoot)\__init__.ps1"
 #endif
 
 # Ensure that the source and target paths valid directories if specified
@@ -54,8 +73,12 @@ if ($SourcePath -and $SourcePath.Count -gt 0) {
     $path = $SourcePath = [array](@((Get-Location).Path))
 }
 
-if (-not($OutputType)) {
-    if ($TargetPath) {
+if ($OutputType) {
+    Write-Warning "Parameter 'OutputType' is obsolete, use '-AsScript' instead."
+} else {
+    if ($AsScript.IsPresent) {
+        $OutputType = 'Script'
+    } elseif ($TargetPath) {
         if (((Test-Path $TargetPath) -and (Get-Item $TargetPath) -is [System.IO.FileInfo]) -or (-not(Test-Path $TargetPath) -and [System.IO.Path]::GetExtension($TargetPath))) {
             # Deafult to 'Auto' for specific file path output
             $OutputType = 'Auto'
@@ -326,7 +349,7 @@ $sources | sort | foreach {
     }
 }
 
-if ($OutputType -eq 'Module') {
+if ($OutputType -eq 'Module' -and -not($SuppressSymbolExport.IsPresent)) {
     if ($Silent.IsPresent) {
     	Write-Verbose "Registering export for symbols..."
     } else {
