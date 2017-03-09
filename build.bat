@@ -1,2 +1,2 @@
-powershell -NoProfile -File build.ps1
-pause
+powershell -NoProfile -ExecutionPolicy Bypass -File build.ps1
+::pause
