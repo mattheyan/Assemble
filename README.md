@@ -14,26 +14,30 @@ Exported Commands
 
 Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
     [-RequiredModules <array>] [-Exclude <string[]>] [-SymbolsToExport <string[]>]
+    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] 
     [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
 
 **Module Output (no export declarations):**
 
 Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
     [-RequiredModules <array>] [-Exclude <string[]>] [-SuppressSymbolExport]
+    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] 
     [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
 
 **Script Output:**
 
 Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
     -AsScript [-RequiredModules <array>] [-Exclude <string[]>]
+    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] 
     [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
 
 **Legacy Parameters:**
 
 Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
     -OutputType <string> {Auto | Module | Script} [-RequiredModules <array>]
-    [-Exclude <string[]>] [-SymbolsToExport <string[]>] [-Flags <string[]>]
-    [-Force] [-Silent] [<CommonParameters>]
+    [-Exclude <string[]>] [-SymbolsToExport <string[]>] 
+    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] 
+    [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
 
 ```
 
@@ -82,6 +86,16 @@ your exports in a "\_\_final\_\_.ps1" file.
 
 A list of symbols to export (if generating a module). If not specified, then all
 functions are exported.
+
+**OutputMode**
+
+Determines the way that script files' contents are written to the generated module.
+Typically functions included in modules are written as '.ps1' files that declare
+a single function of the same name as the file. However, you may want to write
+your script files to be executable instead. By default, Assemble will detect whether
+the first line in your script is "function Verb-Noun {" (matching the name of the file)
+in order to determine which approach is taken. However, you can specify the output mode
+that you want in case the automatic behavior results in unexpected behavior.
 
 **Flags**
 

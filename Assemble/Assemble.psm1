@@ -77,6 +77,10 @@ function Invoke-ScriptBuild {
 	    [Parameter(ParameterSetName='LegacySpecifiedOutput')]
 	    [string[]]$SymbolsToExport,
 	
+	    [Parameter()]
+	    [ValidateSet('RawContent', 'WrapFunction', 'AutoDetect')]
+	    [string]$OutputMode = 'AutoDetect',
+	
 	    # Flags used by preprocessor
 	    [Parameter()]
 	    [string[]]$Flags,
@@ -90,6 +94,10 @@ function Invoke-ScriptBuild {
 		[switch]$Silent
 	)
 	
+	
+	if (-not($OutputMode)) {
+	    $OutputMode = 'AutoDetect'
+	}
 	
 	# Ensure that the source and target paths valid directories if specified
 	if ($SourcePath -and $SourcePath.Count -gt 0) {
@@ -202,6 +210,8 @@ function Invoke-ScriptBuild {
 	$symbols = @()
 	$sources = @()
 	
+	$symbolsToWrap = @()
+	
 	if ($Silent.IsPresent) {
 		Write-Verbose "Searching for source files to include..."
 	} else {
@@ -239,8 +249,7 @@ function Invoke-ScriptBuild {
 	            return
 	        }
 	        $initFile = $_.FullName
-	    }
-	    elseif ($_.Name -eq "__final__.ps1") {
+	    } elseif ($_.Name -eq "__final__.ps1") {
 	        Write-Verbose "Found __final__ (finalize) file."
 	        $sources += $_.FullName
 	        if ($finalFile) {
@@ -254,11 +263,25 @@ function Invoke-ScriptBuild {
 	            }
 	        }
 	        $finalFile = $_.FullName
-	    }
-	    elseif ($_.Name -match "([A-Z][a-z]+`-[A-Z][A-Za-z]+)`.ps1") {
+	    } elseif ($_.Name -match "([A-Z][a-z]+`-[A-Z][A-Za-z]+)`.ps1") {
 	        Write-Verbose "Found source file $($_)."
-	        $symbols += $_.Name -replace ".ps1", ""
+	        $symbolName = $_.Name -replace ".ps1", ""
+	
+	        $symbols += $symbolName
 	        $sources += $_.FullName
+	
+	        if ($OutputMode -eq 'AutoDetect') {
+	            $firstLine = Get-Content $_.FullName | Select-Object -First 1
+	            #((Get-Content $_.FullName) -join "`r`n") -contains "function $($symbolName)"
+	            if ($firstLine -eq "function $($symbolName) {") {
+	                Write-Verbose "Symbol '$($symbolName)' is alredy wrapped in a function block."
+	            } else {
+	                Write-Verbose "Symbol '$($symbolName)' must be wrapped in a function block."
+	                $symbolsToWrap += $symbolName
+	            }
+	        } elseif ($OutputMode -eq 'WrapFunction') {
+	            $symbolsToWrap += $symbolName
+	        }
 	    }
 	    else {
 	        throw "Invalid file name '$($_.Name)'."
@@ -316,7 +339,7 @@ function Invoke-ScriptBuild {
 	    if ($_ -ne $initFile -and $_ -ne $finalFile -and $_ -ne $mainFile) {
 	        $n = ((Split-Path -Path $_ -Leaf) -replace ".ps1", "")
 	        Write-Verbose "Including file $($n).ps1"
-	        if ($n -ne "__init__") {
+	        if ($symbolsToWrap -contains $n) {
 	            Add-Content -Path $tempPath -Value ("function " + $n + " {")
 	        }
 	        $ignore = $false
@@ -344,7 +367,11 @@ function Invoke-ScriptBuild {
 	                Write-Verbose "Ignored: $_"
 	            }
 	            else {
-	                $newLine = "`t" + $_
+	                if ($symbolsToWrap -contains $n) {
+	                    $newLine = "`t" + $_
+	                } else {
+	                    $newLine = $_
+	                }
 	                $foundFileRefs = $false
 	                if ($newLine -match $initFileExpr) {
 	                    $newLine = ""
@@ -376,7 +403,7 @@ function Invoke-ScriptBuild {
 	                }
 	            }
 	        }) | Add-Content -Path $tempPath
-	        if ($n -ne "__init__") {
+	        if ($symbolsToWrap -contains $n) {
 	            Add-Content -Path $tempPath -Value "}`r`n"
 	        }
 	    }
