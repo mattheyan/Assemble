@@ -98,6 +98,8 @@ function Invoke-ScriptBuild {
 	)
 	
 	
+	Write-Verbose "PWD: $($PWD.Path)"
+	
 	if (-not($OutputMode)) {
 		$OutputMode = 'AutoDetect'
 	}
@@ -115,6 +117,10 @@ function Invoke-ScriptBuild {
 		}
 	} else {
 		$path = $SourcePath = [array](@((Get-Location).Path))
+	}
+	
+	$SourcePath | foreach {
+		Write-Verbose "Source: $($_)"
 	}
 	
 	if ($OutputType) {
@@ -341,7 +347,7 @@ function Invoke-ScriptBuild {
 	$symbols | foreach { $allSymbols += $_ }
 	$DefinedSymbols | foreach { $allSymbols += $_ }
 	
-	$sources | sort | foreach {
+	$sources | sort { Split-Path $_ -Leaf } | foreach {
 		Write-Verbose "Name: $($_.Name)"
 		if ($_ -ne $initFile -and $_ -ne $finalFile -and $_ -ne $mainFile) {
 			$n = ((Split-Path -Path $_ -Leaf) -replace ".ps1", "")
@@ -387,7 +393,7 @@ function Invoke-ScriptBuild {
 					}
 					else {
 						$allSymbols | foreach {
-							$symbolExpr = "\.\\(?:(?:(?:\.\.)||[A-Za-z\.]+)\\)$([Regex]::Escape($_))\.ps1"
+							$symbolExpr = "\.\\(?:(?:(?:\.\.)||[A-Za-z\.]+)\\)*$([Regex]::Escape($_))\.ps1"
 							if ($newLine -match $symbolExpr) {
 								$foundFileRefs = $true
 								$newLine = $newLine -replace $symbolExpr, $_

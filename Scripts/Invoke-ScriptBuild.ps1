@@ -65,6 +65,8 @@ param(
 . "$($PSScriptRoot)\__init__.ps1"
 #endif
 
+Write-Verbose "PWD: $($PWD.Path)"
+
 if (-not($OutputMode)) {
 	$OutputMode = 'AutoDetect'
 }
@@ -82,6 +84,10 @@ if ($SourcePath -and $SourcePath.Count -gt 0) {
 	}
 } else {
 	$path = $SourcePath = [array](@((Get-Location).Path))
+}
+
+$SourcePath | foreach {
+	Write-Verbose "Source: $($_)"
 }
 
 if ($OutputType) {
@@ -308,7 +314,7 @@ $allSymbols = @()
 $symbols | foreach { $allSymbols += $_ }
 $DefinedSymbols | foreach { $allSymbols += $_ }
 
-$sources | sort | foreach {
+$sources | sort { Split-Path $_ -Leaf } | foreach {
 	Write-Verbose "Name: $($_.Name)"
 	if ($_ -ne $initFile -and $_ -ne $finalFile -and $_ -ne $mainFile) {
 		$n = ((Split-Path -Path $_ -Leaf) -replace ".ps1", "")
@@ -354,7 +360,7 @@ $sources | sort | foreach {
 				}
 				else {
 					$allSymbols | foreach {
-						$symbolExpr = "\.\\(?:(?:(?:\.\.)||[A-Za-z\.]+)\\)$([Regex]::Escape($_))\.ps1"
+						$symbolExpr = "\.\\(?:(?:(?:\.\.)||[A-Za-z\.]+)\\)*$([Regex]::Escape($_))\.ps1"
 						if ($newLine -match $symbolExpr) {
 							$foundFileRefs = $true
 							$newLine = $newLine -replace $symbolExpr, $_
