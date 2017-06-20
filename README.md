@@ -13,30 +13,30 @@ Exported Commands
 **Module Output:**
 
 Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
-    [-RequiredModules <array>] [-Exclude <string[]>] [-SymbolsToExport <string[]>]
-    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] 
+    [-DependenciesToValidate <array>] [-Exclude <string[]>] [-SymbolsToExport <string[]>]
+    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] [-DefinedSymbols <string[]>]
     [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
 
 **Module Output (no export declarations):**
 
 Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
-    [-RequiredModules <array>] [-Exclude <string[]>] [-SuppressSymbolExport]
-    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] 
+    [-DependenciesToValidate <array>] [-Exclude <string[]>] [-SuppressSymbolExport]
+    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] [-DefinedSymbols <string[]>]
     [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
 
 **Script Output:**
 
 Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
-    -AsScript [-RequiredModules <array>] [-Exclude <string[]>]
-    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] 
+    -AsScript [-DependenciesToValidate <array>] [-Exclude <string[]>]
+    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] [-DefinedSymbols <string[]>]
     [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
 
 **Legacy Parameters:**
 
 Invoke-ScriptBuild [-Name] <string> [[-SourcePath] <string[]>] [[-TargetPath] <string>]
-    -OutputType <string> {Auto | Module | Script} [-RequiredModules <array>]
+    -OutputType <string> {Auto | Module | Script} [-DependenciesToValidate <array>]
     [-Exclude <string[]>] [-SymbolsToExport <string[]>] 
-    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] 
+    [-OutputMode <string> {RawContent | WrapFunction | AutoDetect}] [-DefinedSymbols <string[]>]
     [-Flags <string[]>] [-Force] [-Silent] [<CommonParameters>]
 
 ```
@@ -66,11 +66,18 @@ required if the target path is a directory or is omitted.
 
 If specified, a single script file will be produced rather than a module file.
 
-**RequiredModules**
+**DependenciesToValidate**
 
 The names of dependent modules to validate (if generating a module). If a module
 with the specified name has not already been imported, attempts to import the
 module by name from a global location (i.e. PSModulePath).
+
+**DefinedSymbols**
+
+Optional list of "symbols" that can be referenced in the source as script files.
+This may be useful if you have multiple modules with invoke-able script source,
+where one module references the other. Scripts in the first module can directly
+reference scripts in the second module and compile to a function call.
 
 **Exclude**
 
