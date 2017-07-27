@@ -347,14 +347,18 @@ $sources | sort { Split-Path $_ -Leaf } | foreach {
 				Write-Verbose "Ignored: $_"
 			}
 			else {
-				if ($symbolsToWrap -contains $n) {
+				$newLine = $_
+
+				$includeLine = $true
+
+				# Indent non-empty lines when wrapping in a function block
+				if ($newLine -and $symbolsToWrap -contains $n) {
 					$newLine = "`t" + $_
-				} else {
-					$newLine = $_
 				}
+
 				$foundFileRefs = $false
 				if ($newLine -match $initFileExpr) {
-					$newLine = ""
+					$includeLine = $false
 					$foundFileRefs = $true
 					Write-Verbose "Removed dot-source of '__init__.ps1'."
 				}
@@ -378,7 +382,7 @@ $sources | sort { Split-Path $_ -Leaf } | foreach {
 						Write-Verbose "Result: $newLine"
 					}
 				}
-				if ($newLine) {
+				if ($includeLine) {
 					Write-Output $newLine
 				}
 			}
