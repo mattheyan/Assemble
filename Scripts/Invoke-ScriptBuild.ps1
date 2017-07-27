@@ -247,10 +247,10 @@ Get-ChildItem -Path $SourcePath -Exclude $Exclude -Filter "*.ps1" -Recurse | %{
 		$sources += $_.FullName
 
 		if ($OutputMode -eq 'AutoDetect') {
-			$firstLine = Get-Content $_.FullName | Select-Object -First 1
+			$firstLine = Get-Content $_.FullName | Where-Object { $_ -and -not($_.StartsWith('#')) } | Select-Object -First 1
 			#((Get-Content $_.FullName) -join "`r`n") -contains "function $($symbolName)"
 			if ($firstLine -eq "function $($symbolName) {") {
-				Write-Verbose "Symbol '$($symbolName)' is alredy wrapped in a function block."
+				Write-Verbose "Symbol '$($symbolName)' is already wrapped in a function block."
 			} else {
 				Write-Verbose "Symbol '$($symbolName)' must be wrapped in a function block."
 				$symbolsToWrap += $symbolName
@@ -385,6 +385,9 @@ $sources | sort { Split-Path $_ -Leaf } | foreach {
 		}) | Add-Content -Path $tempPath
 		if ($symbolsToWrap -contains $n) {
 			Add-Content -Path $tempPath -Value "}`r`n"
+		} else {
+			# Insert trailing new-line
+			Add-Content -Path $tempPath -Value ""
 		}
 	}
 }
